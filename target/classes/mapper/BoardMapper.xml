@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.board.repository.IBoardMapper">
+	
+	<!-- BoardVO 타입 resultMap -->
+	<resultMap type="com.board.model.BoardVO" id="BoardMap" />
+
+	<!-- 게시글 리스트 + 검색 결과 리스트 -->
+	<select id="getArticleList" resultMap="BoardMap">
+		SELECT * FROM
+		(
+		SELECT ROWNUM AS rn, tbl.* FROM
+			(
+			SELECT * FROM trdoc
+			<include refid="search" />
+			ORDER BY bno DESC
+			) tbl
+		)
+	<![CDATA[	
+	WHERE rn > (#{page}-1) * #{countPerPage}
+	AND rn <= #{page} * #{countPerPage}
+	]]>
+	</select>
+
+	<!-- 제목/작성자 검색 -->
+	<sql id="search">
+		<if test="condition == 'title'">WHERE LOWER(title) LIKE '%'||#{keyword}||'%'</if>
+		<if test="condition == 'writer'">WHERE LOWER(writer) LIKE '%'||#{keyword}||'%'</if>
+	</sql>
+	
+	<!-- 게시글 수 카운트 -->
+	<select id="countArticles" resultType="int">
+		SELECT COUNT(*)
+		FROM trdoc
+		<include refid="search" />
+	</select>
+	
+	<!-- 게시글 상세보기 -->
+	<select id="selectArticle" resultMap="BoardMap">
+		SELECT * FROM trdoc
+		WHERE bno = #{bno}
+	</select>
+	
+	<!-- 글 등록 -->
+	<insert id="regist">
+		INSERT INTO trdoc
+		VALUES (trdoc_seq.NEXTVAL, #{title}, #{content}, #{writer}, sysdate)		
+	</insert>
+	
+	<!-- 글 삭제 -->
+	<delete id="delete">
+		DELETE FROM trdoc
+		WHERE bno = #{bno}
+	</delete>
+	
+	<!-- 글 수정 -->
+	<update id="update">
+		UPDATE trdoc
+		SET writer = #{writer}, title = #{title}, content = #{content}
+		WHERE bno = #{bno}
+	</update>
+	
+</mapper>
